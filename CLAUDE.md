@@ -86,7 +86,7 @@ Claude 不得因為全域或 Project 層文件沒寫到某業務規則，就假�
 
 - API Token/金鑰一律放 `.env`，已在 `.gitignore`
 - 不提交任何 credentials 到 repo
-- 部署前跑 `npm audit`
+- Node.js 專案部署前跑 `npm audit`
 
 ---
 
