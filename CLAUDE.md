@@ -1,8 +1,12 @@
 # Project 工作區共用規則
 
+> 本檔是 `~/Project/` 下所有開發專案的共用開發規則，不代表某個名為 Project 的專案。各專案獨有規格請見該專案子目錄下的 CLAUDE.md。
+
 ## 🚦 程式開發強制閘門（Gate 1-5）
 
 每個程式任務開始必評估 Gate 1-5；符合觸發條件才執行。自行讀取、自行最優判斷、直接輸出結論。先跑 Gate，Gate 可能改變任務等級，再判定最終等級與角色鏈。跳過任一 Gate 直接修改 → A0 強制介入。
+
+Gate 編號為分類代號，非固定執行順序。一般流程：Gate 0（全域，是否需提問）→ Gate 5（需求釐清/A0）→ Gate 1（讀上下文）→ Gate 2/3（視任務觸發）→ Gate 4/DoD（收尾）。
 
 | Gate | 觸發條件 | 動作 | 詳見 |
 |------|----------|------|------|
@@ -16,13 +20,21 @@
 
 ## 🧠 Context Pack（Gate 1）
 
-中修以上或涉及業務規則/資料庫/API/部署/Webhook/DNS/外部平台時觸發。自行讀取、自行判斷、直接輸出摘要，未完成不得修改檔案。
+中修以上或涉及業務規則/資料庫/API/部署/Webhook/DNS/外部平台時觸發。未完成不得修改檔案。
 
-讀取順序：Project/CLAUDE.md → 專案 CLAUDE.md → DOMAIN_RULES.md → PROJECT_CONTEXT.md → CURRENT_TASK.md → KNOWN_ISSUES.md → 部署時加讀 COOLIFY.md
-
+讀取：本檔 → 專案 CLAUDE.md → DOMAIN_RULES.md → PROJECT_CONTEXT.md → CURRENT_TASK.md → KNOWN_ISSUES.md（部署加 COOLIFY.md）
 輸出（5 行內）：`專案 / 本次目標 / 必讀規則來源 / 不可破壞事項 / 已知風險`
+claude-mem 只作輔助索引，不為業務規則唯一來源。文件與官方文件/實際程式衝突 → 標記並更新。
 
-claude-mem 只作輔助索引，不得為業務規則唯一來源。文件與官方文件或實際程式衝突 → 標記並更新，不得忽略。
+### 各專案入口
+
+| 專案 | 目錄 | Domain | 部署 | 必讀文件 | 特別注意 |
+|------|------|--------|------|----------|---------|
+| Monday 儀表板 | `monday-dashboard/` | dashboard.zhuoye.com.tw | Coolify | `CLAUDE.md` `DOMAIN_RULES.md` `PROJECT_CONTEXT.md` `KNOWN_ISSUES.md` | CPA/客戶貢獻/時數/欄位 mapping 以 DOMAIN_RULES.md 為準 |
+| 卓燁 LINE OA | `zhuoye-line/` | line-admin.zhuoye.com.tw, api.zhuoye.com.tw | Coolify | `CLAUDE.md` `DOMAIN_RULES.md` `PROJECT_CONTEXT.md` `COOLIFY.md` | LINE API/Webhook 修改前必做 Source Check |
+| 卓燁官網 | `ZHUOYE/hugo-site/` | zhuoye.com.tw | Cloudflare Pages | `CLAUDE.md` | Cloudflare Pages 設定修改前必做 Source Check |
+
+必讀文件不存在時：不得假設規則不存在 → 回報缺少文件 → 任務若產生新規則，完成後補齊。
 
 ---
 
@@ -93,6 +105,8 @@ Source Check：
 
 A2自檢範圍：syntax/type error、build error、console error、基本合理性。禁止全專案 review。
 
+S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCreate 追蹤多步驟工作（不取代 Gate）。
+
 ---
 
 ## 🤖 A0-A9 角色與決策邊界
@@ -117,7 +131,7 @@ A2自檢範圍：syntax/type error、build error、console error、基本合理�
 | A9 外部顧問 | 外部獨立審查、卡關校正 | 提Critical/High可暫停任務。三模式：`/a9檢查`（高性價比）、`/a9審查`（最高品質）、`/a9討論`（非程式多輪討論）。回覆強制標 `🤖 A9（OpenAI）：`。自動觸發：同功能≥3次未收斂。fallback：API不可用→DeepSeek替代，標`⚠️ A9 fallback`。DeepSeek收到回覆後須四級分類（🔴必要/🟡建議/🔵較好/⚪不改），暫停等使用者確認後才執行 | 取代A0/A4/A6/A7的owner決策 |
 
 ### A1 3-Strike Error Protocol
-同一錯誤 → 第1次診斷修復 → 第2次換方法 → 第3次重新思考 → 仍失敗交使用者判斷。
+同一錯誤 → 第1次診斷修復 → 第2次換方法 → 第3次重新思考 → 仍失敗交使用者判斷。若影響正式環境/資料/安全/部署，立即升級 A7 Incident Mode，不等待 3 次。
 
 ---
 
@@ -144,97 +158,55 @@ A2自檢範圍：syntax/type error、build error、console error、基本合理�
 
 ---
 
-## 部署平台
+## 部署原則與文件入口
 
-- VPS：阿里雲國際版香港 4C8G
-- 部署工具：Coolify（dashboard.zhuoye.com.tw:8000）
-- DNS：Cloudflare
+共用平台：阿里雲國際版香港 4C8G / Coolify（dashboard.zhuoye.com.tw:8000）/ Cloudflare DNS。實際部署步驟、網域、環境變數以各專案 `PROJECT_CONTEXT.md` 及 `<專案>/COOLIFY.md` 為準。
 
-1. 涉及部署/Domain/SSL/環境變數/Webhook/Dockerfile/Nixpacks 時，必須先讀：
-   - 工作區 `COOLIFY.md`
-   - 該專案 `<專案>/COOLIFY.md`
-   - 該專案 `PROJECT_CONTEXT.md`
+1. 涉及部署/Domain/SSL/環境變數/Webhook/Dockerfile/Nixpacks 時，必先讀：工作區 `COOLIFY.md`、該專案 `<專案>/COOLIFY.md`、該專案 `PROJECT_CONTEXT.md`
 2. 部署失敗 → Gate 3 觸發 A7 Incident Mode
-3. 修復後必須更新該專案 `COOLIFY.md` 或 `KNOWN_ISSUES.md`
+3. 修復後更新該專案 `COOLIFY.md` 或 `KNOWN_ISSUES.md`
+4. 備份/還原：見 `BACKUP.md`、`RESTORE.md`
 
 ---
 
 ## 共用技術棧偏好
 
+以下為新專案或未明確指定時的預設；既有專案以專案內文件與現有程式碼為準。
+
 - 前端：Next.js 14 + TypeScript + Tailwind CSS
 - 資料庫：SQLite（輕量）或 PostgreSQL（多用戶/需權控）
 - ORM：Prisma（預設 prisma db push；既有正式資料庫變更需先確認備份與風險）
 - UI：shadcn/ui + Recharts
-- 新專案預設從此技術棧開始，有理由才偏離
-
----
-
-## 所有專案
-
-| 專案 | 目錄 | Domain | 部署 | 說明 |
-|---|---|---|---|---|
-| Monday 儀表板 | `monday-dashboard/` | dashboard.zhuoye.com.tw | Coolify | 工作活動/案件/客戶貢獻三主體 |
-| 卓燁 LINE OA | `zhuoye-line/` | line-admin.zhuoye.com.tw, api.zhuoye.com.tw | Coolify | LINE Bot 後台「小卓」 |
-| 卓燁官網 | `ZHUOYE/hugo-site/` | zhuoye.com.tw | Cloudflare Pages | Hugo 靜態官網 |
-
----
-
-## 🧭 Gate 1 專案上下文入口
-
-進入任一專案時，先依本表讀取對應文件。不得只靠記憶或 claude-mem 判斷業務規則。
-
-| 專案 | 何時必讀 | 必讀文件 | 特別注意 |
-|---|---|---|---|
-| Monday 儀表板 `monday-dashboard/` | 涉及客戶貢獻、工作活動、案件、客戶分類、人員時數、統計報表、monday.com API | `monday-dashboard/CLAUDE.md`、`monday-dashboard/DOMAIN_RULES.md`、`monday-dashboard/PROJECT_CONTEXT.md`、`monday-dashboard/KNOWN_ISSUES.md` | 客戶貢獻監控不得憑記憶判斷；業務規則、時數規則、客戶分類邏輯、monday 欄位 mapping 一律以 `DOMAIN_RULES.md` 為準 |
-| 卓燁 LINE OA `zhuoye-line/` | 涉及 LINE Bot、Webhook、訊息格式、Rich Menu、API、後台權限 | `zhuoye-line/CLAUDE.md`、`zhuoye-line/DOMAIN_RULES.md`、`zhuoye-line/PROJECT_CONTEXT.md`、`zhuoye-line/COOLIFY.md` | LINE API/Webhook 修改前必須做 Source Check |
-| 卓燁官網 `ZHUOYE/hugo-site/` | 涉及官網內容、SEO、表單、Cloudflare Pages 部署 | `ZHUOYE/hugo-site/CLAUDE.md` | Cloudflare Pages 設定修改前必須做 Source Check |
-
-若必讀文件不存在：
-1. 不得假設規則不存在
-2. 先回報缺少哪份文件
-3. 若任務會產生新規則，完成後建立或補齊文件
-
----
-
-## 部署相關文件
-
-- 通用 Coolify 知識：`COOLIFY.md`（Dockerfile 模板、Nixpacks vs Dockerfile、踩坑全記錄）
-- 各專案 Coolify 步驟：`<專案>/COOLIFY.md`
-- 備份/還原：`BACKUP.md`、`RESTORE.md`
-
 ---
 
 ## 📌 業務規則存放原則
 
-- 全域 `~/.claude/CLAUDE.md` 只放工作流程與通用規則，不放單一專案業務規則
-- `~/Project/CLAUDE.md` 放程式開發規則與專案入口，不放詳細計算邏輯
-- 詳細業務規則一律放在各專案內：`DOMAIN_RULES.md`、`PROJECT_CONTEXT.md`、專案自己的 `CLAUDE.md`
-
-Claude 不得因為全域或 Project 層文件沒寫到某業務規則，就假設該規則不存在。
+全域 `~/.claude/CLAUDE.md` → 工作流程與通用規則；`~/Project/CLAUDE.md` → 開發規則與專案入口。詳細業務規則/計算邏輯一律放各專案 `DOMAIN_RULES.md`、`PROJECT_CONTEXT.md`、專案 `CLAUDE.md`。不得因上層文件未記載就假設規則不存在。
 
 ---
 
 ## 🆕 新專案啟動
 
-多檔案/需設計/涉及 UI → 禁止直接寫程式：brainstorming → writing-plans → 視覺用 impeccable/frontend-design → 確認後才 executing-plans。單一檔案/純資料處理不在此限。
+多檔案/需設計/涉及 UI → brainstorming → writing-plans → 視覺用 impeccable/frontend-design → executing-plans。單一檔案/純資料處理不在此限。
 
-1. 確認需求（全域 brainstorming → writing-plans）
-2. 在 `~/Project/` 下建立目錄
-3. 技術棧預設使用上方共用偏好
-4. 若需部署 → 建立 `<專案>/COOLIFY.md`（參考 `COOLIFY.md` 模板）
-5. 寫 `<專案>/CLAUDE.md`（只寫該專案獨有規格）
+1. 確認需求 → 在 `~/Project/` 下建立目錄 → 技術棧預設使用共用偏好（有理由才偏離）
+2. A5b 建立文件（空模板，後續依規則補）：
+   - `PROJECT_CONTEXT.md`（技術棧/部署/DB/外部服務）
+   - `DOMAIN_RULES.md`（業務規則，記住或被問≥2次時補）
+   - `KNOWN_ISSUES.md`（錯誤特徵/根因/解法）
+   - `COOLIFY.md`（僅 Coolify 部署；Cloudflare Pages/Netlify 不適用）
+   - `CHANGE_LOG_AI.md`（每次修改後）
+3. 寫 `<專案>/CLAUDE.md`（只寫該專案獨有規格）
 
 ---
 
 ## 安全規則
 
-- API Token/金鑰一律放 `.env`，已在 `.gitignore`
-- 不提交任何 credentials 到 repo
+- API Token/金鑰一律放 `.env`，已在 `.gitignore`；不提交 credentials 到 repo
 - Node.js 專案部署前跑 `npm audit`
 
 ---
 
 ## 專案規格
 
-- 卓燁 LINE OA 專案規格：見 `zhuoye-line/CLAUDE.md`
-- Monday 儀表板專案規格：見 `monday-dashboard/CLAUDE.md`
+各專案規格見上方 [各專案入口](#各專案入口) 所列必讀文件。
