@@ -1,0 +1,10 @@
+# 不追蹤各專案子目錄（各自有獨立 repo）
+zhuoye-line/
+monday-dashboard/
+ZHUOYE/
+Investment/
+
+# 工具目錄
+.agents/
+.claude/
+.codegraph/
