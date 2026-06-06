@@ -175,7 +175,7 @@ A2自檢範圍：syntax/type error、build error、console error、基本合理�
 |---|---|---|---|---|
 | Monday 儀表板 | `monday-dashboard/` | dashboard.zhuoye.com.tw | Coolify | 工作活動/案件/客戶貢獻三主體 |
 | 卓燁 LINE OA | `zhuoye-line/` | line-admin.zhuoye.com.tw, api.zhuoye.com.tw | Coolify | LINE Bot 後台「小卓」 |
-| 卓燁官網 | `ZHUOYE/hugo-site/` | zhuoye.com.tw | Netlify | Hugo 靜態官網 |
+| 卓燁官網 | `ZHUOYE/hugo-site/` | zhuoye.com.tw | Cloudflare Pages | Hugo 靜態官網 |
 
 ---
 
@@ -187,7 +187,7 @@ A2自檢範圍：syntax/type error、build error、console error、基本合理�
 |---|---|---|---|
 | Monday 儀表板 `monday-dashboard/` | 涉及客戶貢獻、工作活動、案件、客戶分類、人員時數、統計報表、monday.com API | `monday-dashboard/CLAUDE.md`、`monday-dashboard/DOMAIN_RULES.md`、`monday-dashboard/PROJECT_CONTEXT.md`、`monday-dashboard/KNOWN_ISSUES.md` | 客戶貢獻監控不得憑記憶判斷；業務規則、時數規則、客戶分類邏輯、monday 欄位 mapping 一律以 `DOMAIN_RULES.md` 為準 |
 | 卓燁 LINE OA `zhuoye-line/` | 涉及 LINE Bot、Webhook、訊息格式、Rich Menu、API、後台權限 | `zhuoye-line/CLAUDE.md`、`zhuoye-line/DOMAIN_RULES.md`、`zhuoye-line/PROJECT_CONTEXT.md`、`zhuoye-line/COOLIFY.md` | LINE API/Webhook 修改前必須做 Source Check |
-| 卓燁官網 `ZHUOYE/hugo-site/` | 涉及官網內容、SEO、表單、Netlify 部署 | `ZHUOYE/hugo-site/CLAUDE.md`、`ZHUOYE/hugo-site/PROJECT_CONTEXT.md` | Netlify 設定修改前必須做 Source Check |
+| 卓燁官網 `ZHUOYE/hugo-site/` | 涉及官網內容、SEO、表單、Cloudflare Pages 部署 | `ZHUOYE/hugo-site/CLAUDE.md` | Cloudflare Pages 設定修改前必須做 Source Check |
 
 若必讀文件不存在：
 1. 不得假設規則不存在
