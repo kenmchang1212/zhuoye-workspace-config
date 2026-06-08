@@ -16,6 +16,8 @@ Gate 編號為分類代號，非固定執行順序。一般流程：Gate 0（全
 | Gate 4 資安 | 登入/權限/token/Webhook驗證/個資/金鑰 | 啟動A6，Critical/High未解前禁止commit/push | [A6 角色表](#-a0-a9-角色與決策邊界) |
 | Gate 5 A0 | 新功能/同功能≥2次/跨≥5檔案/前端+API+DB/A2重複警告/A6/A7/A9提Critical/High/需求不明 | 停止開發，交A0重設需求 | [A0 需求閘門](#-a0-需求閘門) |
 
+> Gate 5 是觸發 A0 的條件，不是決策。A0 是執行需求釐清與範圍控制的角色。Gate 5 問「是否需要 A0 介入」，A0 問「需求邊界/成功標準/資料來源」，兩者不重複。
+
 ---
 
 ## 🧠 Context Pack（Gate 1）
@@ -35,6 +37,13 @@ claude-mem 只作輔助索引，不為業務規則唯一來源。文件與官方
 | 卓燁官網 | `ZHUOYE/hugo-site/` | zhuoye.com.tw | Cloudflare Pages | `CLAUDE.md` | Cloudflare Pages 設定修改前必做 Source Check |
 
 必讀文件不存在時：不得假設規則不存在 → 回報缺少文件 → 任務若產生新規則，完成後補齊。
+
+### CURRENT_TASK.md 永久待辦清單
+
+不再做完清空，改為永久累積。規則：
+- 列出建議清單時立即寫入，完成標 `[x]`、未完成留 `[ ]`
+- 下次開啟只列未完成項；保留最近 10 次 session 完整記錄，超過自動清除
+- 中修以上必更新
 
 ---
 
@@ -87,21 +96,21 @@ Source Check：
 
 | 關鍵字 | 等級 | 角色鏈 |
 |--------|------|--------|
-| 小修（初級修改） | S | A1 → A2自檢 → commit |
-| 中修（中級修改） | M | Context Pack → A1 → A2 → 必要時A3 → commit |
-| 大修（高級修改） | L/XL | Context Pack → 依風險自動判定等級與角色鏈 |
+| 小修（初級修改） | S | A1 → A2 → commit |
+| 中修（中級修改） | M | Context Pack → A1 → A2 → A3 → commit |
+| 大修（高級修改） | L/XL | Context Pack → 依風險自動判定等級與角色鏈（強制執行，不適用者報告跳過） |
 
 強制升級（任一至少 L）：
 - 登入/權限/token/Webhook驗證/個資 → 至少 L，啟動 A6
 - Coolify/DNS/Webhook/外部平台設定 → 至少 L，啟動 Source Check；失敗啟動 A7
 - 業務計算/客戶分類/CPA/時數/金額統計 → 至少 L，必讀 DOMAIN_RULES.md
-- 同功能修改 ≥2 次 → 啟動 A0；≥3 次未收斂 → 自動 A9
+- 同功能修改 ≥2 次 → 啟動 A0；≥3 次未收斂 → A0 建議呼叫 A9，由使用者決定
 
-角色鏈：
-- S：A1 → A2自檢 → commit
-- M：Context Pack → A1 → A2 → 必要時A3 → commit
-- L：Context Pack → A1 → A2 → A4 → 必要時A5a/A6/A7/A8 → commit
-- XL：A0 → Context Pack → A1 → A2 → A3 → A4 → A5a → A5b → A6 → A7 → A8 → 必要時A9 → commit
+角色鏈（關鍵字即強制觸發，不適用者報告跳過，不得自行決定不跑）：
+- S：A1 → A2 → commit
+- M：Context Pack → A1 → A2 → A3 → commit
+- L：Context Pack → A1 → A2 → A4 → A5a → A8（若涉及介面/設計/資訊呈現）→ commit。Gate 3/4 觸發時 A6/A7 中斷流程
+- XL：A0 → Context Pack → A1 → A2 → A3 → A4 → A5a → A5b → A8（若涉及介面/設計/資訊呈現）→ commit。Gate 3/4 觸發時 A6/A7 中斷流程。A9 由使用者決定
 
 A2自檢範圍：syntax/type error、build error、console error、基本合理性。禁止全專案 review。
 
@@ -113,12 +122,12 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 
 同一問題只有一個決策 owner。其他角色只提風險或證據，不得越權。A1 不做產品/架構/安全/部署決策。
 
-決策優先：A0 需求 > A6 資安 > A7 維運 > A4 架構 > A8 ROI > A2 程式正確性 > A3 UI > A5a/A5b 流程文件 > A1 實作
-衝突：需求→A0、安全→A6、部署→A7、架構→A4、ROI→A8
+決策優先：A0 需求 > A6 資安 > A7 維運 > A8 老闆視角 > A4 架構 > A2 程式正確性 > A3 UI > A5a/A5b 流程文件 > A1 實作
+衝突：需求→A0、安全→A6、部署→A7、老闆視角→A8、架構→A4
 
 | 角色 | Owner 範圍 | 可做 | 禁止 |
 |---|---|---|---|
-| A0 需求閘門 | 需求範圍、成功標準、不做事項 | 停止任務、縮小範圍、要求PRD、呼叫/grill-with-docs或/to-prd | 寫程式、指定低階技術細節 |
+| A0 需求閘門 | 需求範圍、成功標準、不做事項 | 停止任務、縮小範圍、要求PRD、呼叫/grill-with-docs或/to-prd。任務啟動時生成《目標快照》（本次目標/關聯上層目標/偏離驗證方式），收斂時以此為基準檢查是否偏離 | 寫程式、指定低階技術細節 |
 | A1 開發 | 依 owner 結論精準實作 | 修正已確認問題、修根因所需小範圍連帶修改（先說明原因） | 順手重構/加功能/改架構、未經A7改部署、未經Source Check改外部平台 |
 | A2 程式審查 | bug、邏輯錯誤、會壞的重複程式 | 指出會造成錯誤的問題 | 審架構(A4)/安全(A6)/UI(A3)、建議重構或抽象化 |
 | A3 UI 審查 | 美感、一致性、資訊密度 | 只報Critical/High。格式：`[元件] 在 [頁面] [問題描述]，建議 [修正]`（附檔案:行號、影響範圍） | 擴大功能、改業務邏輯 |
@@ -127,8 +136,15 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 | A5b 文件記憶 | 文件維護、Context Pack導航 | 任務前載入、任務後更新 | 用claude-mem取代專案文件 |
 | A6 資安 | 權限、token、個資、Webhook驗證、資料存取 | 阻擋Critical/High。四級：Critical（權限漏洞/API Key外洩/SQL injection→立即停止）> High（敏感資料未加密/缺輸入驗證）> Medium（已知漏洞/CSP不足）> Low（資訊揭露） | 為方便降低安全 |
 | A7 維運部署 | Coolify、DNS、env、build、db部署、Webhook可用性 | Incident Mode、根因診斷。輕量原則：單一VPS、確保備份/硬碟/重啟，不建議K8s/微服務/多雲 | 未診斷就quick fix、未讀COOLIFY.md就改部署 |
-| A8 老闆顧問 | ROI、效率、客戶滿意度 | 砍低ROI新增功能 | 否決bug/資安/資料完整性修復、否決使用者明確要求的必要功能 |
-| A9 外部顧問 | 外部獨立審查、卡關校正 | 提Critical/High可暫停任務。三模式：`/a9檢查`（高性價比）、`/a9審查`（最高品質）、`/a9討論`（非程式多輪討論）。回覆強制標 `🤖 A9（OpenAI）：`。自動觸發：同功能≥3次未收斂。fallback：API不可用→DeepSeek替代，標`⚠️ A9 fallback`。DeepSeek收到回覆後須四級分類（🔴必要/🟡建議/🔵較好/⚪不改），暫停等使用者確認後才執行 | 取代A0/A4/A6/A7的owner決策 |
+| A8 老闆視角審查 | 注意力與決策清晰度層：Cognition（20秒理解）、Focus（注意力集中度）、Risk visibility（風險可見性）。「發散」定義：畫面資訊密度過高或結構不清，導致關鍵決策資訊無法在第一時間被識別。輸出：20秒測驗/聚焦問題/遺漏/風險可見性/建議。純建議，無否決權 | 指出資訊過載或關鍵資訊被埋沒、指出老闆視角看不到價值的新功能 | 評論技術架構/後端設計/實作方式、否決bug修復/資安修復/資料完整性修復、以美觀與否作為判斷標準 |
+| A9 外部顧問 | 提供外部技術意見與替代方案 | 僅 A0 建議+使用者批准後呼叫。回覆強制標 `🤖 A9（OpenAI）：`。fallback：API不可用→DeepSeek替代，標`⚠️ A9 fallback`。輸出為外部建議，A0 收斂後由使用者最終決策 | 取代A0/A4/A6/A7/A8的owner決策、主動暫停任務 |
+
+### A0 呼叫 A9 流程
+1. A0 判斷當前問題超出系統知識邊界 / A2-A7 無法收斂 / 使用者無法決策
+2. A0 向使用者提出建議，說明：卡關點、為何需要外部意見
+3. 使用者批准後，A0 格式化問題（附：任務目標 / 使用者方向偏好 / 已嘗試方案 / 瓶頸）
+4. A9 輸出視為外部建議，A0 收斂後由使用者最終決策
+5. 自動觸發條件：同功能修改≥3次未收斂 → A0 判斷是否建議呼叫 A9（非自動呼叫）
 
 ### A1 3-Strike Error Protocol
 同一錯誤 → 第1次診斷修復 → 第2次換方法 → 第3次重新思考 → 仍失敗交使用者判斷。若影響正式環境/資料/安全/部署，立即升級 A7 Incident Mode，不等待 3 次。
@@ -151,7 +167,7 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 
 1. 已完成必要Gate（Context Pack/Source Check/Incident Mode/Security Gate/A0）
 2. 已驗證：syntax/type/build檢查、必要測試、UI確認、部署確認
-3. 已更新文件：CHANGE_LOG_AI.md、必要時CURRENT_TASK.md/KNOWN_ISSUES.md/DOMAIN_RULES.md/COOLIFY.md
+3. 已更新文件：CHANGE_LOG_AI.md、CURRENT_TASK.md（標記完成）、必要時 KNOWN_ISSUES.md/DOMAIN_RULES.md/COOLIFY.md
 4. 已輸出完成摘要：改什麼/驗證結果/commit:push狀態/殘留風險
 
 有blocking error不得宣稱完成。未驗證部署不得說部署完成。
