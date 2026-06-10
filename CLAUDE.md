@@ -32,11 +32,7 @@ claude-mem 只作輔助索引，不為業務規則唯一來源。文件與官方
 
 ### 各專案入口
 
-| 專案 | 目錄 | Domain | 部署 | 必讀文件 | 特別注意 |
-|------|------|--------|------|----------|---------|
-| Monday 儀表板 | `monday-dashboard/` | dashboard.zhuoye.com.tw | Coolify | `CLAUDE.md` `DOMAIN_RULES.md` `PROJECT_CONTEXT.md` `KNOWN_ISSUES.md` | CPA/客戶貢獻/時數/欄位 mapping 以 DOMAIN_RULES.md 為準 |
-| 卓燁 LINE OA | `zhuoye-line/` | line-admin.zhuoye.com.tw, api.zhuoye.com.tw | Coolify | `CLAUDE.md` `DOMAIN_RULES.md` `PROJECT_CONTEXT.md` `COOLIFY.md` | LINE API/Webhook 修改前必做 Source Check |
-| 卓燁官網 | `ZHUOYE/hugo-site/` | zhuoye.com.tw | Cloudflare Pages | `CLAUDE.md` | Cloudflare Pages 設定修改前必做 Source Check |
+所有專案見 `~/Project/*/`，各專案 CLAUDE.md 自我描述部署平台與必讀文件。任務開始時讀取對應專案 CLAUDE.md 即可。
 
 必讀文件不存在時：不得假設規則不存在 → 回報缺少文件 → 任務若產生新規則，完成後補齊。
 
