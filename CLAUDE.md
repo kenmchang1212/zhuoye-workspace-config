@@ -92,6 +92,34 @@ Source Check：
 
 ---
 
+## 🔧 工具優先原則
+
+具體調用規則見下方 Skill Router。禁止以腦內推理取代明確可用的技能流程。
+
+---
+
+## 🧭 Skill Router 最小規則
+
+原則：角色負責判斷，技能負責執行。遇到明確對應技能時，優先使用技能；若不使用，需用一句話說明原因。不得為了形式同時調用多個重複技能。
+
+1. `using-superpowers` 已於 session start 自動 invoke，後續任務由本 Skill Router 直接選擇具體技能。
+2. 新功能 / 需求不清 / 同功能反覆修改：A0 先輸出目標快照；需求模糊時才用 `brainstorming`；必要時用 `grill-with-docs` 或 `to-prd`。
+3. 中修以上 / 多步驟 / 跨檔案：M/L 級用簡化計畫（口頭列出目標/影響檔案/驗證方式/風險即可）。
+   XL 級（新系統/架構重構）才強制走 brainstorming → writing-plans → executing-plans 完整鏈。
+4. Bug / 錯誤 / 部署失敗 / 同錯反覆：A7 使用 `systematic-debugging`，禁止 quick fix。
+   `diagnose` 僅在 A7 Incident Mode 需快速分類時輔助使用。
+5. UI / 後台 / dashboard / 官網：A3 使用 `impeccable:impeccable` 稽核；實作階段用 `frontend-design`。
+   `webapp-testing` 需 Python + Playwright 環境，可用時才使用，不可因缺依賴卡住任務。
+6. `make-interfaces-feel-better` 僅打磨階段使用，不得每次小修都跑。
+7. 實作完成後：A2 使用 `requesting-code-review`（subagent 隔離審查），禁止 A1 自審。
+   無法啟動 subagent 時 fallback 用 `review` 或 `qa`。
+8. 宣稱完成前：必用 `verification-before-completion`；沒有證據不得說完成。
+9. 登入 / 權限 / token / Webhook / 客戶資料 / 個資：A6 使用 `security-review`。
+10. 大改 / 上線前 / 同問題多次未收斂：調用 `a9檢查` 或 `a9審查` 技能（非角色），由外部模型提供建議；A9 技能輸出是外部建議，不取代 A0/A4/A6/A7 的 owner 決策。
+11. 既有專案中修以上 / 不熟悉脈絡 / 找不到檔案位置：A5b 才使用 `claude-mem:mem-search`、`claude-mem:pathfinder` 或 `claude-mem:smart-explore`；claude-mem 僅輔助索引，不取代專案文件。
+
+---
+
 🎯 工作模式與風險分級（自動判定）
 
 判定順序：先依下方條件初判 S/M/L/XL，再以強制升級規則檢查是否升等。強制升級規則觸發即覆蓋初判結果。
@@ -157,10 +185,10 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 | A1 開發 | 依 owner 結論精準實作 | 修正已確認問題、修根因所需小範圍連帶修改（先說明原因） | 順手重構/加功能/改架構、未經A7改部署、未經Source Check改外部平台 |
 
 🔗 角色鏈強制規則
-- M 以上任務：必須執行完整角色鏈，不可跳過
-- A1 不得自行宣告其他角色「已 implicitly 完成」
-- 標註「獨立審查」的角色：必須以獨立審查區塊輸出，執行方式見「獨立審查執行規範」
-- 每個角色必須輸出獨立審查區塊，格式見「審查輸出格式」
+
+- M 以上任務必須執行完整角色鏈，不可跳過。
+- A1 不得宣稱其他角色已隱含完成。
+- 缺少必要審查區塊，不得 commit。
 
 | A2 程式審查 | bug、邏輯錯誤、會壞的重複程式 | 指出會造成錯誤的問題 | 審架構(A4)/安全(A6)/UI(A3)、建議重構或抽象化 |
 | A3 UI 審查 | 美感、一致性、資訊密度 | A3 審查層級：<br>- 對外系統（官網）：三階段<br>　審查：impeccable critique + audit<br>　修復：frontend-design 或 impeccable craft<br>　打磨：make-interfaces-feel-better（16 條微互動檢查）<br>- 核心後台（監控/LINE 後台/客戶中心）：二階段<br>　審查：impeccable critique<br>　修復：直接修改，不強制使用設計工具<br>- CLI 工具（投資系統）：跳過 A3<br>新專案依系統類型自動套用：對外系統 = 三階段，核心後台 = 二階段，CLI = 跳過。不需每次重新判定。 | 擴大功能、改業務邏輯 |
@@ -181,73 +209,51 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 
 ---
 
-📋 審查輸出格式（M 以上強制執行）
+📋 審查輸出精簡格式
 
-A3 UI Review（獨立審查）
+M 以上任務需依角色鏈輸出審查區塊。各角色保留專屬檢查欄位，避免泛泛審查。
+
+A3 UI Review
   - 核心問題：好不好用？
   - 發現問題：
   - 修正建議：
   - 判定：PASS / PASS-WITH-NOTES / FAIL
-  （PASS → 可進入下一階段）
-  （PASS-WITH-NOTES → 可繼續，但需記錄改善建議）
-  （FAIL → A1 修正後重新提交 A3）
 
-A4 Architecture Review（獨立審查）
+A4 Architecture Review
   - 核心問題：架構對不對？
   - 資料流：
   - 模組邊界：
   - 技術債：
-  - 技術風險（效能/安全性/可維護性/耦合度）：
+  - 技術風險：
   - 判定：PASS / PASS-WITH-NOTES / FAIL
-  （PASS → 可進入下一階段）
-  （PASS-WITH-NOTES → 可繼續，但需記錄改善建議）
-  （FAIL → A1 修正後重新提交 A4）
 
-A5a 流程審查（獨立審查）
+A5a 流程審查
   - 核心問題：流程順不順？
-  - 模擬目標使用者：老闆 / 同事 / 客戶
-  - 模擬使用者操作步驟：
-  - 檢查項目：
-    - 多餘步驟
-    - 容易迷路
-    - 重複輸入
-    - 操作中斷點
-    - 不合理等待
-  - 流程風險：
+  - 模擬使用者：
+  - 操作步驟：
+  - 檢查：多餘步驟 / 迷路點 / 重複輸入 / 中斷點 / 不合理等待
   - 改善建議：
   - 判定：PASS / FAIL
-  （FAIL → A1 修正後重新提交 A5a）
 
-A8 Boss Review（獨立審查）
+A8 Boss Review
   - 核心問題：老闆 30 秒看懂嗎？
-  - 30秒重點：能否在 30 秒內看懂核心資訊
-  - 最大決策風險（誤判方向/錯過重要訊號/看不懂重點）：
+  - 30秒重點：
+  - 最大決策風險：
   - 最優先處理事項：
   - 判定：PASS / FAIL
-  （FAIL → 回到 A1，簡化或重構資訊呈現）
+
+FAIL → 回到 A1 修正後再審。
 
 ### A1 3-Strike Error Protocol
 同一錯誤 → 第1次診斷修復 → 第2次換方法 → 第3次重新思考 → 仍失敗交使用者判斷。若影響正式環境/資料/安全/部署，立即升級 A7 Incident Mode，不等待 3 次。
 
 ---
 
-🤖 獨立審查執行規範
+🤖 獨立審查硬約束
 
-需以獨立審查區塊執行的角色：A3 / A4 / A5a / A8
-
-執行方式（依環境選擇）：
-- 優先：使用 Task 工具啟動獨立 Agent 執行審查
-- 若環境不支援 Task（例如 DeepSeek 外掛模式）：由當前模型以「模擬獨立 Agent」方式執行，必須輸出完整的獨立審查區塊，不得與 A1 開發內容混合
-- 若無法確認環境是否支援 Task → 預設使用模擬獨立審查，確保審查不被跳過
-
-執行原則：
-- 每個獨立審查只專注自己的領域，不兼做其他角色
-- 審查結果必須由主模型彙整後決定下一步（繼續/修正/重構）
-- 同一次審查中，A3 和 A4 必須是不同審查實例
-
-不可兼任的組合：
-- A1 不得兼任 A3 / A4 / A5a / A8
-- 審查區塊不可內嵌於開發輸出中，必須獨立呈現
+- A1 不得兼任 A3 / A4 / A5a / A8；審查需以獨立區塊輸出。
+- 每個審查角色只審自己的 owner 範圍，不兼做其他角色。
+- 若環境不支援 Task，使用「模擬獨立 Agent」方式輸出審查區塊。
 
 ---
 
