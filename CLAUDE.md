@@ -162,7 +162,7 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 
 同一問題只有一個決策 owner。其他角色只提風險或證據，不得越權。A1 不做產品/架構/安全/部署決策。
 
-決策優先：A0 需求 > A6 資安 > A7 維運 > A8 老闆視角 > A4 架構 > A2 程式正確性 > A3 UI > A5a 流程審查 > A1 實作（A5b 為持續背景角色，不參與決策排序）
+決策優先：A0 需求 > A6 資安 > A7 維運 > A8 老闆視角 > A4 架構 > A2 程式正確性 > A3 UI > A5a 流程審查 > A1 實作
 衝突：需求→A0、安全→A6、部署→A7、老闆視角→A8、架構→A4
 
 🎯 每個角色要回答的核心問題
@@ -187,7 +187,7 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 | A3 UI 審查 | 美感、一致性、資訊密度 | A3 審查層級：<br>- 對外系統（官網）：三階段<br>　審查：impeccable critique + audit<br>　修復：frontend-design 或 impeccable craft<br>　打磨：make-interfaces-feel-better（16 條微互動檢查）<br>- 核心後台（監控/LINE 後台/客戶中心）：二階段<br>　審查：impeccable critique<br>　修復：直接修改，不強制使用設計工具<br>- CLI 工具（投資系統）：跳過 A3<br>新專案依系統類型自動套用：對外系統 = 三階段，核心後台 = 二階段，CLI = 跳過。不需每次重新判定。 | 擴大功能、改業務邏輯 |
 | A4 架構審查 | data flow、service boundary、DB結構、模組耦合 | 建議架構邊界，無上層衝突時可自行決定。需求不清時呼叫A0 | 建議K8s/微服務/新語言/新DB/訊息佇列 |
 | A5a 流程審查 | 流程合理性、使用者體驗 | A5a 流程審查：模擬目標使用者（老闆/同事/客戶）完成主要任務流程，檢查多餘步驟、迷路點、重複輸入、操作中斷點、不合理等待。以獨立審查區塊執行。 | 決定部署修法、改業務決策 |
-| A5b 文件記憶 | 文件維護、習慣累積（持續背景運行，不因 S/M/L/XL 觸發，不可跳過） | 任務前載入 Context Pack、任務後更新文件、累積使用者習慣（五類標準見 `~/.claude/CLAUDE.md` 習慣累積段落） | 用 claude-mem 取代專案文件 |
+| A5b 文件記憶 | 文件維護、習慣累積（持續背景運行，不因 S/M/L/XL 觸發，不可跳過） | 任務前載入 Context Pack、任務後更新文件、累積使用者習慣（完整規則見 `~/.claude/CLAUDE.md` A5b 段落） | 用 claude-mem 取代專案文件 |
 | A6 資安 | 權限、token、個資、Webhook驗證、資料存取 | 阻擋Critical/High。四級：Critical（權限漏洞/API Key外洩/SQL injection→立即停止）> High（敏感資料未加密/缺輸入驗證）> Medium（已知漏洞/CSP不足）> Low（資訊揭露） | 為方便降低安全 |
 | A7 維運部署 | Coolify、DNS、env、build、db部署、Webhook可用性 | Incident Mode、根因診斷。輕量原則：單一VPS、確保備份/硬碟/重啟，不建議K8s/微服務/多雲 | 未診斷就quick fix、未讀COOLIFY.md就改部署 |
 | A8 老闆視角審查 | 注意力與決策清晰度層：Cognition（20-30秒理解）、Focus（注意力集中度）、Risk visibility（風險可見性）。「發散」定義：畫面資訊密度過高或結構不清，導致關鍵決策資訊無法在第一時間被識別。輸出：20-30秒測驗/聚焦問題（含風險可見性）/遺漏/可隱藏資訊/建議。純建議，無否決權 | 指出資訊過載或關鍵資訊被埋沒、指出老闆視角看不到價值的新功能 | 評論技術架構/後端設計/實作方式、否決bug修復/資安修復/資料完整性修復、以美觀與否作為判斷標準、不得要求停止開發、不得否決需求、不得否決修復、最終決策權永遠屬於使用者 |
@@ -305,14 +305,6 @@ FAIL → 回到 A1 修正後再審。
 ## 📌 文件記憶原則
 
 詳細 A5b 規則見 `~/.claude/CLAUDE.md`。業務規則/計算邏輯一律放各專案 `DOMAIN_RULES.md`。不得因上層文件未記載就假設規則不存在。
-
-### A5b 文件記憶
-
-既有專案 M 以上 / 不熟悉脈絡 / 找不到檔案位置：
-
-- 使用 `claude-mem:mem-search`、`claude-mem:pathfinder` 或 `claude-mem:smart-explore`
-- claude-mem 僅輔助索引，不取代 `DOMAIN_RULES.md`、`PROJECT_CONTEXT.md`、`KNOWN_ISSUES.md`
-- 不得每次任務都查 claude-mem
 
 ---
 
