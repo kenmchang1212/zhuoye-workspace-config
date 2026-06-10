@@ -23,12 +23,7 @@ M 以上或涉及業務規則/DB/API/部署/Webhook/DNS 時觸發。未完成不
 
 ### 各專案入口
 
-| 專案 | 目錄 | 部署 | 必讀文件 |
-|------|------|------|---------|
-| Monday 儀表板 | `monday-dashboard/` | Coolify | `CLAUDE.md` `DOMAIN_RULES.md` `PROJECT_CONTEXT.md` `KNOWN_ISSUES.md` |
-| 卓燁 LINE OA | `zhuoye-line/` | Coolify | `CLAUDE.md` `DOMAIN_RULES.md` `PROJECT_CONTEXT.md` `COOLIFY.md` |
-| 卓燁官網 | `ZHUOYE/hugo-site/` | Cloudflare Pages | `CLAUDE.md` |
-| 卓燁 CRM | `zhuoye-crm/` | Coolify | `CLAUDE.md` `DOMAIN_RULES.md` `PROJECT_CONTEXT.md` `COOLIFY.md` |
+所有專案見 `~/Project/*/`，各專案 CLAUDE.md 自我描述部署平台與必讀文件。任務開始時讀取對應專案 CLAUDE.md 即可。
 
 ## 🚨 A6 Incident Mode（Gate 3）
 
