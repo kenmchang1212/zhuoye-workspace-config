@@ -12,7 +12,7 @@ Gate 非固定順序，一般流程：Gate 0（提問）→ Gate 5（需求/A0�
 
 | Gate | 觸發條件 | 動作 | 詳見 |
 |------|----------|------|------|
-| Gate 1 Context Pack | 業務規則/金額/統計/客戶/CPA/時數/DB/API/部署/Webhook/DNS/中修以上 | 讀專案文件，5行內輸出摘要，未完成禁止寫程式 | [Context Pack](#-context-pack) |
+| Gate 1 Context Pack | 業務規則/金額/統計/客戶/CPA/時數/DB/API/部署/Webhook/DNS/M 以上 | 讀專案文件，5行內輸出摘要，未完成禁止寫程式 | [Context Pack](#-context-pack) |
 | Gate 2 Source Check | 涉及外部平台（Coolify/LINE/Cloudflare/Netlify/monday.com等） | 查官方文件，輸出查證來源，查不到禁改高風險設定 | [Source Check](#-source-check-gate) |
 | Gate 3 Incident | 部署/Webhook/DNS/外部平台失敗≥1次 | 停止quick fix，A7全局診斷，輸出根因+一次性修復計畫 | [A7 Incident Mode](#-a7-incident-mode) |
 | Gate 4 資安 | 登入/權限/token/Webhook驗證/個資/金鑰 | 啟動A6，Critical/High未解前禁止commit/push | [A6 角色表](#-a0-a9-角色與決策邊界) |
@@ -24,7 +24,7 @@ Gate 非固定順序，一般流程：Gate 0（提問）→ Gate 5（需求/A0�
 
 ## 🧠 Context Pack（Gate 1）
 
-中修以上或涉及業務規則/資料庫/API/部署/Webhook/DNS/外部平台時觸發。未完成不得修改檔案。
+M 以上或涉及業務規則/資料庫/API/部署/Webhook/DNS/外部平台時觸發。未完成不得修改檔案。
 
 讀取：本檔 → 專案 CLAUDE.md → DOMAIN_RULES.md → PROJECT_CONTEXT.md → CURRENT_TASK.md → KNOWN_ISSUES.md（部署加 COOLIFY.md）
 輸出（5 行內）：`專案 / 本次目標 / 必讀規則來源 / 不可破壞事項 / 已知風險`
@@ -41,7 +41,7 @@ claude-mem 只作輔助索引，不為業務規則唯一來源。文件與官方
 不再做完清空，改為永久累積。規則：
 - 列出建議清單時立即寫入，完成標 `[x]`、未完成留 `[ ]`
 - 下次開啟只列未完成項；保留最近 10 次 session 完整記錄，超過自動清除
-- 中修以上必更新
+- M 以上必更新
 
 ---
 
@@ -100,7 +100,7 @@ Source Check：
 
 1. `using-superpowers` 已於 session start 自動 invoke，後續任務由本 Skill Router 直接選擇具體技能。
 2. 新功能 / 需求不清 / 同功能反覆修改：A0 先輸出目標快照；需求模糊時才用 `brainstorming`；必要時用 `grill-with-docs` 或 `to-prd`。
-3. 中修以上 / 多步驟 / 跨檔案：M/L 級用簡化計畫（口頭列出目標/影響檔案/驗證方式/風險即可）。
+3. M 以上 / 多步驟 / 跨檔案：用簡化計畫（口頭列出目標/影響檔案/驗證方式/風險即可）。
    XL 級（新系統/架構重構）才強制走 brainstorming → writing-plans → executing-plans 完整鏈。
 4. Bug / 錯誤 / 部署失敗 / 同錯反覆：A7 使用 `systematic-debugging`，禁止 quick fix。
    `diagnose` 僅在 A7 Incident Mode 需快速分類時輔助使用。
@@ -112,7 +112,6 @@ Source Check：
 8. 宣稱完成前：必用 `verification-before-completion`；沒有證據不得說完成。
 9. 登入 / 權限 / token / Webhook / 客戶資料 / 個資：A6 使用 `security-review`。
 10. 大改 / 上線前 / 同問題多次未收斂：調用 `a9檢查` 或 `a9審查` 技能（非角色），由外部模型提供建議；A9 技能輸出是外部建議，不取代 A0/A4/A6/A7 的 owner 決策。
-11. 既有專案中修以上 / 不熟悉脈絡 / 找不到檔案位置：A5b 才使用 `claude-mem:mem-search`、`claude-mem:pathfinder` 或 `claude-mem:smart-explore`；claude-mem 僅輔助索引，不取代專案文件。
 
 ---
 
@@ -141,7 +140,7 @@ XL：任一條件
   - 新系統
   - 架構重構
   - 多資料來源整合（monday + LINE + DB 等）
-  - 角色鏈：A0 → Context Pack → A1 → A2 → A3（獨立審查）→ A4（獨立審查）→ A5a（獨立審查）→ A5b → A8（獨立審查）→ commit
+  - 角色鏈：A0 → Context Pack → A1 → A2 → A3（獨立審查）→ A4（獨立審查）→ A5a（獨立審查）→ A8（獨立審查）→ commit
 
 強制升級規則（以下任一成立即升至 L，即使只有 1 個檔案）：
   - 涉金流/個資 → 升至 L，自動觸發 Gate 4 + A6 資安審查
@@ -153,8 +152,6 @@ XL：任一條件
     A0 六選一：繼續 / 先釐清需求 / 先產PRD / 縮小範圍 / 砍掉重做 / 暫停
     A0 需輸出目標快照：本次目標 / 上層目標 / 不處理 / 成功標準 / 偏離警訊
 
-使用者關鍵字對照：中修（中級修改）→ M、大修（高級修改）→ L/XL。關鍵字僅作初始參考，最終等級以條件判定為準。
-
 A2自檢範圍：S級：syntax/type/build/console/基本合理性 | M級以上：上述 + bug/邏輯錯誤/潛在故障風險/明顯違反既有模式。禁止全專案 review。
 
 S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCreate 追蹤多步驟工作（不取代 Gate）。
@@ -165,7 +162,7 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 
 同一問題只有一個決策 owner。其他角色只提風險或證據，不得越權。A1 不做產品/架構/安全/部署決策。
 
-決策優先：A0 需求 > A6 資安 > A7 維運 > A8 老闆視角 > A4 架構 > A2 程式正確性 > A3 UI > A5a/A5b 流程文件 > A1 實作
+決策優先：A0 需求 > A6 資安 > A7 維運 > A8 老闆視角 > A4 架構 > A2 程式正確性 > A3 UI > A5a 流程審查 > A1 實作（A5b 為持續背景角色，不參與決策排序）
 衝突：需求→A0、安全→A6、部署→A7、老闆視角→A8、架構→A4
 
 🎯 每個角色要回答的核心問題
@@ -190,7 +187,7 @@ S/M/L/XL 決定風險等級與角色鏈，Gate 決定必要檢查關卡，TaskCr
 | A3 UI 審查 | 美感、一致性、資訊密度 | A3 審查層級：<br>- 對外系統（官網）：三階段<br>　審查：impeccable critique + audit<br>　修復：frontend-design 或 impeccable craft<br>　打磨：make-interfaces-feel-better（16 條微互動檢查）<br>- 核心後台（監控/LINE 後台/客戶中心）：二階段<br>　審查：impeccable critique<br>　修復：直接修改，不強制使用設計工具<br>- CLI 工具（投資系統）：跳過 A3<br>新專案依系統類型自動套用：對外系統 = 三階段，核心後台 = 二階段，CLI = 跳過。不需每次重新判定。 | 擴大功能、改業務邏輯 |
 | A4 架構審查 | data flow、service boundary、DB結構、模組耦合 | 建議架構邊界，無上層衝突時可自行決定。需求不清時呼叫A0 | 建議K8s/微服務/新語言/新DB/訊息佇列 |
 | A5a 流程審查 | 流程合理性、使用者體驗 | A5a 流程審查：模擬目標使用者（老闆/同事/客戶）完成主要任務流程，檢查多餘步驟、迷路點、重複輸入、操作中斷點、不合理等待。以獨立審查區塊執行。 | 決定部署修法、改業務決策 |
-| A5b 文件記憶 | 文件維護、Context Pack導航 | 任務前載入、任務後更新 | 用claude-mem取代專案文件 |
+| A5b 文件記憶 | 文件維護、習慣累積（持續背景運行，不因 S/M/L/XL 觸發，不可跳過） | 任務前載入 Context Pack、任務後更新文件、累積使用者習慣（五類標準見 `~/.claude/CLAUDE.md` 習慣累積段落） | 用 claude-mem 取代專案文件 |
 | A6 資安 | 權限、token、個資、Webhook驗證、資料存取 | 阻擋Critical/High。四級：Critical（權限漏洞/API Key外洩/SQL injection→立即停止）> High（敏感資料未加密/缺輸入驗證）> Medium（已知漏洞/CSP不足）> Low（資訊揭露） | 為方便降低安全 |
 | A7 維運部署 | Coolify、DNS、env、build、db部署、Webhook可用性 | Incident Mode、根因診斷。輕量原則：單一VPS、確保備份/硬碟/重啟，不建議K8s/微服務/多雲 | 未診斷就quick fix、未讀COOLIFY.md就改部署 |
 | A8 老闆視角審查 | 注意力與決策清晰度層：Cognition（20-30秒理解）、Focus（注意力集中度）、Risk visibility（風險可見性）。「發散」定義：畫面資訊密度過高或結構不清，導致關鍵決策資訊無法在第一時間被識別。輸出：20-30秒測驗/聚焦問題（含風險可見性）/遺漏/可隱藏資訊/建議。純建議，無否決權 | 指出資訊過載或關鍵資訊被埋沒、指出老闆視角看不到價值的新功能 | 評論技術架構/後端設計/實作方式、否決bug修復/資安修復/資料完整性修復、以美觀與否作為判斷標準、不得要求停止開發、不得否決需求、不得否決修復、最終決策權永遠屬於使用者 |
@@ -305,9 +302,17 @@ FAIL → 回到 A1 修正後再審。
 - UI：shadcn/ui + Recharts
 ---
 
-## 📌 業務規則存放原則
+## 📌 文件記憶原則
 
-全域 `~/.claude/CLAUDE.md` → 工作流程與通用規則；`~/Project/CLAUDE.md` → 開發規則與專案入口。詳細業務規則/計算邏輯一律放各專案 `DOMAIN_RULES.md`、`PROJECT_CONTEXT.md`、專案 `CLAUDE.md`。不得因上層文件未記載就假設規則不存在。
+詳細 A5b 規則見 `~/.claude/CLAUDE.md`。業務規則/計算邏輯一律放各專案 `DOMAIN_RULES.md`。不得因上層文件未記載就假設規則不存在。
+
+### A5b 文件記憶
+
+既有專案 M 以上 / 不熟悉脈絡 / 找不到檔案位置：
+
+- 使用 `claude-mem:mem-search`、`claude-mem:pathfinder` 或 `claude-mem:smart-explore`
+- claude-mem 僅輔助索引，不取代 `DOMAIN_RULES.md`、`PROJECT_CONTEXT.md`、`KNOWN_ISSUES.md`
+- 不得每次任務都查 claude-mem
 
 ---
 
