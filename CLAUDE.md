@@ -26,8 +26,8 @@
 
 > 情境專家不是常規流程的一部分。只有符合觸發條件時才啟動。
 
-- **Security Expert**：涉及 token / 權限 / 金流 / 個資 / 登入時觸發
-- **Deployment Expert**：部署失敗時觸發。先讀 COOLIFY.md，找第一個真正錯誤，不猜
+- **Security Expert**：涉及 token / 權限 / 個資 / 金流 / Webhook 驗證 / 客戶資料時觸發
+- **Deployment Expert**：涉及部署設定、DNS、Webhook、環境變數、Coolify，或部署失敗時觸發。先讀 COOLIFY.md，找第一個真正錯誤，不猜
 - **Boss View Expert**：Dashboard / 管理面板需求時觸發，確保老闆 30 秒能看懂
 
 ## 情境 Gate（高風險才觸發）
@@ -38,9 +38,11 @@
 觸發範例：改 Dockerfile、改 env 變數、改 Webhook URL、改 Cloudflare/Coolify/LINE/monday.com 設定
 
 ### Context Pack Gate
-涉及 DB / API / 業務規則時觸發。先讀專案文件。
+涉及 DB / API / 業務規則 / 金額 / 統計邏輯時觸發。先讀專案文件。
 
 觸發範例：改 Prisma schema、新增 API endpoint、改金額計算邏輯
+
+優先讀取：1.專案 CLAUDE.md → 2.PROJECT_CONTEXT.md → 3.DOMAIN_RULES.md → 4.KNOWN_ISSUES.md
 
 ### Incident Mode Gate
 部署 / DNS / Webhook 失敗時觸發。停止 quick fix，診斷根因，一次性修復。
@@ -49,7 +51,7 @@
 
 ## Skills（工具箱，自由選用）
 
-Skills 是工具，不是流程。看到任務特徵符合就直接用，不需要判斷「是否該用」。
+Skills 是工具，不是流程。任務明顯需要時直接用；不需要時不要為了形式調用。
 沒有合適 skill 時，直接用工程判斷。
 
 | 技能 | 定位 |
@@ -101,4 +103,4 @@ Skills 是工具，不是流程。看到任務特徵符合就直接用，不需�
 
 ## 完成回報
 
-改了什麼 / 怎麼驗證 / 殘留風險 / 是否 commit+push
+改了什麼 / 怎麼驗證 / 殘留風險 / 是否已 commit / 是否已 push
