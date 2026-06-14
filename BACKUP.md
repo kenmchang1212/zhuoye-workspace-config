@@ -1,78 +1,73 @@
-# 備份系統總覽
+# 備份系統總覽（卓燁所有專案）
 
-> 最後更新：2026-06-03
+> 最後更新：2026-06-15（VPS 月付轉年付遷移後重建，舊 R2 unified 架構已淘汰）
+> **本檔是所有專案備份的唯一計劃，各專案不另存備份文件。**
 
-## 架構圖
+## 兩條備份線
 
 ```
-VPS PostgreSQL ──→ Cloudflare R2 (daily 3am CST)
-              └──→ Dropbox (daily 3am CST)
+【資料庫】新機 VPS ─加密AES256─→ R2        每日 03:00（留 7 天，主線）
+                   └加密AES256─→ Dropbox   每 3 天 04:00（留 30 天，異地冗餘）
 
-本機 Mac ──→ Dropbox (daily 2am) — git bundle 全專案
+【程式碼】本機 Mac ─git bundle─→ Dropbox   每日 02:00 ＋ GitHub（即時）
 ```
 
-## 涵蓋範圍
+- **資料庫**＝有狀態真資料，加密完整快照；R2 為主、Dropbox 異地冗餘，每份獨立可還原
+- **程式碼**＝無狀態，靠 git bundle ＋ GitHub，不需加密
 
-| 備份對象 | 方式 | 目標 | 頻率 | 保留 |
-|----------|------|------|------|------|
-| VPS zhuoye_line 資料庫 | pg_dump + gzip | R2 + Dropbox | 每日 03:00 | 14 天 |
-| VPS coolify 資料庫 | pg_dump + gzip | R2 + Dropbox | 每日 03:00 | 14 天 |
-| zhuoye-website | git bundle --all | Dropbox | 每日 02:00 | 14 天 |
-| zhuoye-line | git bundle --all | Dropbox | 每日 02:00 | 14 天 |
-| monday-dashboard | git bundle --all | Dropbox | 每日 02:00 | 14 天 |
-| investment-monitor | git bundle --all | Dropbox | 每日 02:00 | 14 天 |
+## VPS 資料庫備份（新機 8.217.40.74，`ssh newvps`）
 
-## 儲存目標
+- 統一腳本：`/opt/backups/vps-unified-backup.sh`（一支、兩模式）
+  - `… r2`：每日 03:00 → R2，`rclone delete --min-age 7d`（留 7 天）
+  - `… dropbox`：每 3 天 04:00 → Dropbox，`--min-age 30d`（留 30 天）
+- 加密密碼：`/opt/backups/.backup-pass`（AES-256、root 600、使用者持有）— **務必異地保管一份副本；VPS 掛掉還原要用**
+- 排程：root `crontab -l`；日誌 `/var/log/unified-backup.log`
+- 備份內容（4 份，各獨立可還原）：
 
-### Cloudflare R2
-- Bucket: `zhuoye-postgres-backup`
-- 端點: `e83df7239e68f814ebb958001bfdd973.r2.cloudflarestorage.com`
-- 帳號: Kenmchang1212@gmail.com
-- 方案: Free（10GB）
+  | 名稱 | 來源 | 容器 |
+  |---|---|---|
+  | monday-dashboard | SQLite `/data/dev.db` | monday app（service `vegojpuupqnunsa99qn8h8y3-*`）|
+  | zhuoye_line | PostgreSQL | `postgres-main`（alias k2rx9…）|
+  | zhuoye_crm | PostgreSQL（正式 628 客戶庫）| `postgres-main` |
+  | coolify | PostgreSQL（平台/部署設定，重建用）| `coolify-db` |
 
-### Dropbox
-- App: `zhuoye-backup`（App folder 類型，隔離於 `Apps/zhuoye-backup/`）
-- 路徑: `backup/`（資料庫）、`projects/`（git bundle）
+- 工具：rclone（remote `r2:` ＋ `dropbox:`）＋ `docker exec pg_dump`/gzip ＋ openssl
+- 目的地：R2 `r2:zhuoye-postgres-backup/daily/`；Dropbox `dropbox:VPS/snapshots/`
 
-## VPS 備份
+## 本機程式碼備份（Mac）
 
-- 腳本: `/opt/pg-backup.sh`
-- 排程: `/etc/cron.d/pg-backup`
-- 日誌: `/var/log/pg-backup.log`
-- 工具: rclone v1.74.2 + pg_dump + gzip
-- 設定: `/root/.config/rclone/rclone.conf`
+- 腳本：`~/opt/project-backup.sh`｜排程：LaunchAgent `~/Library/LaunchAgents/com.zhuoye.project-backup.plist`（每日 02:00）｜日誌：`~/opt/project-backup.log`
+- 內容：各專案 `git bundle` ＋ `.env` → `dropbox:projects/<日期>/`
+- 已驗證涵蓋：zhuoye-crm、zhuoye-line、zhuoye-website（GitHub 為即時鏡像，見下）
 
-## 本機備份
+## GitHub（程式碼即時備份）
 
-- 腳本: `/Users/zhangminkai/opt/project-backup.sh`
-- 排程: `~/Library/LaunchAgents/com.zhuoye.project-backup.plist`（每日 02:00）
-- 日誌: `/Users/zhangminkai/opt/project-backup.log`
-- 工具: rclone + git bundle
-- 設定: `~/.config/rclone/rclone.conf`
-
-## GitHub 備份
-
-所有專案原始碼同時存在 GitHub：
-- `kenmchang1212/zhuoye-website`
-- `kenmchang1212/zhuoye-line`（含備份腳本於 `scripts/`）
-- `kenmchang1212/monday-dashboard`
-- `kenmchang1212/investment-monitor`
+`kenmchang1212/`：zhuoye-website、zhuoye-line、zhuoye-crm、monday-dashboard、zhuoye-workspace-config（~/Project 工作區設定）
 
 ## 還原
 
-### 資料庫還原
-從 R2 或 Dropbox 下載備份檔，解壓後用 `psql` 匯入。
-
-### 專案還原（異地重建）
-從 Dropbox 下載 `projects/日期/` 目錄，內含各專案 `.bundle` 檔：
+### 資料庫（加密）
 ```bash
-git clone 專案名.bundle 專案名
+# 1) 下載（R2 或 Dropbox 擇一）
+ssh newvps 'rclone copy r2:zhuoye-postgres-backup/daily/<檔名>.enc /tmp/'
+# 2) 解密 + 解壓
+openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/opt/backups/.backup-pass -in <檔名>.enc | gunzip > restored.sql
+# 3) 匯入
+#    PostgreSQL：docker exec -i postgres-main psql -U postgres <dbname> < restored.sql
+#    SQLite：    restored 就是 dev.db，停容器 → 替換 /data/dev.db → 啟容器
 ```
-另含 `rclone.conf` 可重建備份管道。
+### 程式碼
+```bash
+rclone copy dropbox:projects/<日期>/<專案>.bundle ./ && git clone <專案>.bundle <專案>
+```
 
 ## 驗證
 
-- 手動執行 `/Users/zhangminkai/opt/project-backup.sh` 確認無報錯
-- VPS: `tail /var/log/pg-backup.log` 查看最近備份紀錄
-- Dropbox: `rclone ls dropbox:backup/` 查看資料庫備份
-- Dropbox: `rclone ls dropbox:projects/` 查看專案備份
+- VPS 資料庫：`ssh newvps 'tail /var/log/unified-backup.log'`｜`rclone lsl r2:zhuoye-postgres-backup/daily/`｜`rclone lsl dropbox:VPS/snapshots/`
+- 本機程式碼：`launchctl list | grep project-backup`｜`rclone lsl dropbox:projects/`
+
+## 遷移備註（2026-06-15）
+
+- 舊機 47.239.84.14 的備份已**停用**（crontab 清空、`/etc/cron.d/unified-backup` 改名停用）；舊機留退路至 6/17，確認新機無誤後去阿里雲「釋放」（同時停付費）。
+- **舊架構已淘汰**（勿再參考）：R2 每日 14 天＋Dropbox 每週 8 週、密碼檔 `/root/.backup-key`、`/opt/vps-unified-backup.sh` 在舊機、含備 `zhuoye-crm` 連字號空殼庫（已刪）。
+- 2026-06-15 已實測：R2＋Dropbox 兩模式各 4 庫成功上傳、R2 還原測試通過（解密解壓得正常 SQL）。
