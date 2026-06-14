@@ -2,7 +2,8 @@
 
 > 一般任務直接推進；只有高風險情境才啟動安全網。
 
-本檔是 ~/Project/ 下所有開發專案的共用開發規則。各專案獨有規格見該專案子目錄 CLAUDE.md。
+本檔是 ~/Project/ 下所有開發專案的共用規則，各專案獨有規格見該專案子目錄 CLAUDE.md。
+（思考習慣、進專案讀文件、Memory 分流見全域 CLAUDE.md，此處不重複。）
 
 ## 技術棧偏好
 
@@ -13,94 +14,60 @@
 - 圖表：Recharts
 - 部署：Coolify on 阿里雲國際版香港 4C8G，Cloudflare DNS
 
-## 三步執行核心
+## 情境專家（高風險才觸發，做錯會出事）
 
-不是角色、不是流程鐵律、不強制輸出。是思考習慣。
-簡單任務直接執行，不必顯性輸出三步。
+你負責守的領域，碰到就從這角度把關：
+- **資安專家**：涉及 token / 權限 / 個資 / 金流 / Webhook 驗證 / 客戶資料時觸發，Critical 未解不上線
+- **部署專家**：改部署設定 / DNS / Coolify 時觸發，先讀 COOLIFY.md／PROJECT_CONTEXT.md（失敗診斷見故障關卡）
 
-- **Understand**：理解意圖、判斷風險、選擇技能
-- **Design**：最小可行解、不過度設計、不順手改其他東西
-- **Execute + Validate**：實作、驗證、回報
+## 情境關卡（高風險才觸發，動手前必過的檢查）
 
-## 情境專家（Situational Experts）
+- **查證關卡**：改外部平台設定（Dockerfile / Webhook URL / Cloudflare·Coolify·LINE·monday）或連線/金鑰類 env（DATABASE_URL / API key / token / secret）→ 先查官方文件，不憑記憶
+- **讀文件關卡**：涉及 DB / API / 業務規則 / 金額（改 Prisma schema / 新 API / 改金額計算）→ 先讀專案文件（清單與按需讀見全域「進專案＋專案文件」）
+- **故障關卡**：部署 / DNS / Webhook 失敗（build 失敗、502、Webhook 不回、DNS 解析失敗）→ 停 quick fix，找第一個真正錯誤、不猜，一次修到根因
+- **資料關卡**：刪除或批次修改正式資料（批次刪客戶 / 批次改記帳費 / 無 WHERE 的 update）→ 先確認範圍＋備份，禁止無條件批次操作
 
-> 情境專家不是常規流程的一部分。只有符合觸發條件時才啟動。
+## 品質把關（不是風險，是「做出來要好懂」）
 
-- **Security Expert**：涉及 token / 權限 / 個資 / 金流 / Webhook 驗證 / 客戶資料時觸發
-- **Deployment Expert**：涉及部署設定、DNS、Webhook、環境變數、Coolify，或部署失敗時觸發。先讀 COOLIFY.md，找第一個真正錯誤，不猜
-- **Boss View Expert**：Dashboard / 管理面板需求時觸發，確保老闆 30 秒能看懂
+- **老闆視角**：Dashboard / 管理面板需求時觸發，確保老闆 30 秒看懂
 
-## 情境 Gate（高風險才觸發）
+## Skills（核心名稱對應）
 
-### Source Check Gate
-涉及外部平台設定時觸發。先查官方文件，不憑記憶。
+工具定位見全域 CLAUDE.md。未安裝同名 skill 時用對應替代，無替代則用工程判斷、不卡任務。
 
-觸發範例：改 Dockerfile、改 env 變數、改 Webhook URL、改 Cloudflare/Coolify/LINE/monday.com 設定
-
-### Context Pack Gate
-涉及 DB / API / 業務規則 / 金額 / 統計邏輯時觸發。先讀專案文件。
-
-觸發範例：改 Prisma schema、新增 API endpoint、改金額計算邏輯
-
-優先讀取：1.專案 CLAUDE.md → 2.PROJECT_CONTEXT.md → 3.DOMAIN_RULES.md → 4.KNOWN_ISSUES.md
-
-### Incident Mode Gate
-部署 / DNS / Webhook 失敗時觸發。停止 quick fix，診斷根因，一次性修復。
-
-觸發範例：Coolify build 失敗、網站 502、Webhook 不回電、DNS 解析失敗
-
-## Skills（工具箱，自由選用）
-
-Skills 是工具，不是流程。任務明顯需要時直接用；不需要時不要為了形式調用。
-沒有合適 skill 時，直接用工程判斷。
-
-| 技能 | 定位 |
-|------|------|
-| `code-graph` | 處理「程式怎麼組織」— 結構、依賴、影響範圍 |
-| `dashboard-design` | 處理「顯示什麼資訊」— KPI 選擇、數據架構、老闆視角 |
-| `workflow-design` | 處理「流程怎麼走」— 步驟順序、狀態轉換、條件分支 |
-| `design-interface` | 處理「畫面怎麼呈現」— 排版、顏色、互動、動畫效果 |
-| `debug-root-cause` | 處理「為什麼壞了」— 錯誤根因，非 quick fix |
-
-五個技能處理不同層次的問題，非互斥選項。
+| 核心名稱 | 實際對應 | 定位 |
+|---------|---------|------|
+| `code-graph` | MCP codegraph | 程式怎麼組織—結構、依賴、影響範圍 |
+| `dashboard-design` | `ui-designer` + 工程判斷 | 顯示什麼資訊—KPI、數據架構、老闆視角 |
+| `workflow-design` | `prompt-optimizer` | 流程怎麼走—步驟、狀態、分支 |
+| `design-interface` | `impeccable` + `frontend-design` | 畫面怎麼呈現—排版、顏色、互動、動畫 |
+| `debug-root-cause` | `systematic-debugging` | 為什麼壞了—根因，非 quick fix |
 
 ## 開發慣例
 
-- 程式碼修改前先理解相關檔案結構
-- 改完自己檢查：syntax / type / build / 基本邏輯
-- 不要順手重構、不要自己新增未要求功能
+- 改程式前先理解相關檔案結構；改完自查 syntax / type / build / 邏輯
+- 不順手重構、不自己加未要求的功能
 - 不確定業務規則時停下來問
-- 同一問題修兩次仍失敗 → 改用 debug-root-cause，不繼續猜
-- 如果影響正式環境 / 資料 / 安全 / 部署，立即升級 Incident Mode
+- 同一問題修兩次仍失敗 → debug-root-cause，不繼續猜
+- 影響正式環境 / 資料 / 安全 / 部署 → 立即升級故障關卡
 
 ## 部署
 
-共用平台：阿里雲香港 Coolify + Cloudflare DNS。
-各專案部署細節見該專案 PROJECT_CONTEXT.md 及 COOLIFY.md。
-
-涉及部署時：
-1. 先讀該專案 PROJECT_CONTEXT.md 和 COOLIFY.md
-2. 查官方文件（Source Check Gate）
-3. 找第一個真正錯誤，不要只看最後一行 log
-4. 修復後記錄到 KNOWN_ISSUES.md 或 COOLIFY.md
+共用平台：阿里雲香港 Coolify + Cloudflare DNS；各專案細節見該專案 PROJECT_CONTEXT.md 及 COOLIFY.md。
+Git：直接 commit main → push → Coolify Redeploy（監聽 main），不開 feature branch；僅大型重構/高風險才另開。
+流程：①先讀該專案 PROJECT_CONTEXT.md＋COOLIFY.md ②查官方文件 ③改完記錄到 KNOWN_ISSUES.md 或 COOLIFY.md。
 
 ## 安全底線
 
-- Token / 金鑰一律 .env，已在 .gitignore，不提交
+- Token / 金鑰一律 .env、已在 .gitignore，不提交
 - Node.js 專案部署前跑 npm audit
-- 涉及金流 / 個資 / 權限 → Security Expert 介入
+- 涉及金流 / 個資 / 權限 → 資安專家介入
 
 ## 文件原則
 
-每個專案最多保留：
-- CLAUDE.md：專案獨有規格
-- PROJECT_CONTEXT.md：技術環境、部署資訊
-- DOMAIN_RULES.md：業務規則、計算邏輯（被問 ≥2 次才寫入）
-- KNOWN_ISSUES.md：重大錯誤根因與解法
-- CHANGE_LOG_AI.md：重要修改紀錄
-
+五種專案文件（CLAUDE / PROJECT_CONTEXT / DOMAIN_RULES / KNOWN_ISSUES / CHANGE_LOG_AI）用途與讀寫時機見全域「進專案＋專案文件」。
 習慣累積：使用者穩定偏好才寫入，不記 debug log、不記一次性小修。
 
 ## 完成回報
 
-改了什麼 / 怎麼驗證 / 殘留風險 / 是否已 commit / 是否已 push
+格式：改了什麼 / 怎麼驗證 / 殘留風險 / 是否已 commit / 是否已 push
