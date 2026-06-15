@@ -38,8 +38,8 @@
 | 核心名稱 | 實際對應 | 定位 |
 |---------|---------|------|
 | `code-graph` | MCP codegraph | 程式怎麼組織—結構、依賴、影響範圍 |
-| `dashboard-design` | `ui-designer` + 工程判斷 | 顯示什麼資訊—KPI、數據架構、老闆視角 |
-| `workflow-design` | `prompt-optimizer` | 流程怎麼走—步驟、狀態、分支 |
+| `dashboard-design` | 工程判斷（老闆視角把關） | 顯示什麼資訊—KPI、數據架構、老闆視角 |
+| `workflow-design` | 工程判斷 | 流程怎麼走—步驟、狀態、分支 |
 | `design-interface` | `impeccable` + `frontend-design` | 畫面怎麼呈現—排版、顏色、互動、動畫 |
 | `debug-root-cause` | `systematic-debugging` | 為什麼壞了—根因，非 quick fix |
 
